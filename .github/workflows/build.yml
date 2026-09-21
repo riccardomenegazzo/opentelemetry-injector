@@ -13,32 +13,58 @@ permissions:
 
 jobs:
   verify-and-build-binary:
-    runs-on: ${{ matrix.ARCH == 'amd64' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
+    runs-on: ${{ matrix.RUNNER }}
     strategy:
       matrix:
-        ARCH: [ "amd64", "arm64"]
+        include:
+          - ARCH: amd64
+            RUNNER: ubuntu-24.04
+            NATIVE_TESTS: true
+          - ARCH: arm64
+            RUNNER: ubuntu-24.04-arm
+            NATIVE_TESTS: true
+          - ARCH: ppc64le
+            RUNNER: ubuntu-24.04
+            NATIVE_TESTS: false
+          - ARCH: s390x
+            RUNNER: ubuntu-24.04
+            NATIVE_TESTS: false
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      - name: Set up QEMU
+        if: matrix.NATIVE_TESTS == false
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+        with:
+          platforms: ${{ matrix.ARCH }}
+
       - uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # v2.2.1
+        if: matrix.NATIVE_TESTS
         with:
           use-cache: false
 
       - name: lint source code
+        if: matrix.NATIVE_TESTS
         run: |
           make lint
 
       - name: Run Zig unit tests
+        if: matrix.NATIVE_TESTS
         run: make zig-unit-tests ARCH=${{ matrix.ARCH }}
 
       - name: Build binary
         run: make dist ARCH=${{ matrix.ARCH }}
 
       - name: Run Injector integration tests
+        if: matrix.NATIVE_TESTS
         run: make injector-integration-tests-for-one-architecture ARCH=${{ matrix.ARCH }}
+
+      - name: Run cross-architecture preload smoke tests
+        if: matrix.NATIVE_TESTS == false
+        run: make injector-architecture-smoke-test ARCH=${{ matrix.ARCH }}
 
       - name: Upload binary
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

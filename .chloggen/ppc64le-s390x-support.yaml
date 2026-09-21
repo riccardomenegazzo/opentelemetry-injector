@@ -1,0 +1,11 @@
+# Use this changelog template to create an entry for release notes.
+
+change_type: enhancement
+component: injector
+note: Build and publish injector binaries for ppc64le and s390x.
+issues: [384]
+subtext: |
+  Release artifacts now include ppc64le and s390x builds in addition to amd64 and arm64.
+  CI validates the new binaries under QEMU on both glibc and musl by loading the injector
+  through LD_PRELOAD and verifying that it injects an OpenTelemetry resource attribute.
+change_logs: [user]

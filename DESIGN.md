@@ -12,11 +12,10 @@ In the remainder of this document `LD_PRELOAD` and `/etc/ld.so.preload` are used
 
 ## Design Constraints
 
-* The injector must work seamlessly with the two dominant CPU architectures found with Linux workloads, x86_64 and
-  arm64.
-  It should be possible to extend the support to other CPU architectures later on.
-  (Note: When distributed as a container image, it is trivial to achieve this, by compiling the injector binary for all
-  supported CPU architectures and building a multi-platform image.)
+* The injector must work seamlessly on all CPU architectures for which this repository publishes release artifacts:
+  x86_64 (amd64), arm64, ppc64le, and s390x.
+  Architecture-specific binaries are built independently so the injector can remain libc-independent and safe to
+  preload into both glibc- and musl-based workloads.
 * The injector must work seamlessly with both libc flavors, the [GNU C library](https://sourceware.org/glibc/) (or glibc
   for short) and [musl](https://musl.libc.org/).
   When adding the injector via `LD_PRELOAD` to systems where the libc flavor is not known ahead of time, this is

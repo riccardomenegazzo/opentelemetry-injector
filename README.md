@@ -8,6 +8,7 @@
 > [releases page](https://github.com/open-telemetry/opentelemetry-packaging/releases).
 >
 > This repository publishes only the raw `libotelinject.so` shared library.
+> Release artifacts are built for Linux amd64, arm64, ppc64le, and s390x.
 > Please open packaging bugs and feature requests against `opentelemetry-packaging`.
 
 The OpenTelemetry injector is a shared library (written in [Zig](https://ziglang.org/)) that is intended to be

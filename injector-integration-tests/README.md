@@ -2,8 +2,11 @@ Injector Integration Tests
 ==========================
 
 This directory contains integration tests for the injector binary.
-The tests in this folder do not use a multi-platform image; instead, an injector binary is build (in a container)
-per CPU architecture, and then used for testing.
+The full runtime integration suite runs natively on amd64 and arm64. Release binaries for ppc64le and s390x are
+cross-built in CI and validated with a focused preload smoke test on both glibc and musl: the test verifies the ELF
+architecture, loads the injector through `LD_PRELOAD`, and checks that it injects an OpenTelemetry resource attribute.
+This keeps the architecture validation independent from the availability of language-runtime test images on those
+platforms.
 Note that the Zig source code in `src` also contains Zig unit tests. The integration tests for the DEB and RPM system
 packages live in [open-telemetry/opentelemetry-packaging](https://github.com/open-telemetry/opentelemetry-packaging).
 
@@ -13,9 +16,11 @@ The available test cases for the injector integration tests are listed in the fi
 Usage
 -----
 
-* `scripts/test-all.sh` to run all tests.
-* `ARCHITECTURES=arm64,amd64 scripts/test-all.sh` to run tests for a subset of CPU architectures.
+* `scripts/test-all.sh` to run the full integration suite on amd64 and arm64.
+* `ARCHITECTURES=arm64,amd64 scripts/test-all.sh` to run tests for a subset of those native-test CPU architectures.
   Can be combined with `LIBC_FLAVORS` and other flags.
+* `ARCH=ppc64le make injector-architecture-smoke-test` (or `ARCH=s390x`) to run the cross-architecture preload
+  smoke test. Docker binfmt/QEMU support for the selected architecture must already be installed.
 * `LIBC_FLAVORS=glibc,musl scripts/test-all.sh` to run tests for a subset of libc flavors.
   Can be combined with `ARCHITECTURES` and other flags.
 * `TEST_SETS=default,nodejs,jvm,sdk-does-not-exist,sdk-cannot-be-accessed` to only run a subset of test sets. The test

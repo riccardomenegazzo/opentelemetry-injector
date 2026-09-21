@@ -39,11 +39,13 @@ $(DIST_TARGET): $(DIST_SRCS)
 	@echo building the injector binary for architecture $(ARCH)
 	@set -e
 	@mkdir -p $(DIST_DIR_BINARY)
-	if [[ "$(ARCH)" = arm64 ]]; then \
-	  ZIG_ARCHITECTURE=aarch64; \
-	elif [[ "$(ARCH)" = amd64 ]]; then \
-	  ZIG_ARCHITECTURE=x86_64; \
-	fi; \
+	case "$(ARCH)" in \
+	  arm64) ZIG_ARCHITECTURE=aarch64 ;; \
+	  amd64) ZIG_ARCHITECTURE=x86_64 ;; \
+	  ppc64le) ZIG_ARCHITECTURE=powerpc64le ;; \
+	  s390x) ZIG_ARCHITECTURE=s390x ;; \
+	  *) echo "Unsupported ARCH: $(ARCH). Expected one of: amd64, arm64, ppc64le, s390x." >&2; exit 1 ;; \
+	esac; \
 	docker buildx build --platform linux/$(ARCH) --build-arg DOCKER_REPO=$(DOCKER_REPO) --build-arg ZIG_ARCHITECTURE=$$ZIG_ARCHITECTURE -o type=image,name=libotelinject-builder:$(ARCH),push=false .
 	docker rm -f libotelinject-builder 2>/dev/null || true
 	docker run -d --platform linux/$(ARCH) --name libotelinject-builder libotelinject-builder:$(ARCH) sleep inf
@@ -74,6 +76,7 @@ uninstall:
 # Alternatively, you can also use the same commands directly on your development machine, without using the development
 # container.
 # By explicitly setting ARCH=arm64 or ARCH=amd64 you can run and test on different CPU platforms.
+# ppc64le and s390x can be cross-built with "make dist" when Docker binfmt/QEMU support for the target is available.
 # Mostly intended for development.
 .PHONY: docker-dev-run
 docker-dev-run:
@@ -114,6 +117,10 @@ injector-integration-tests-for-one-architecture:
 .PHONY: injector-integration-tests-for-all-architectures
 injector-integration-tests-for-all-architectures:
 	injector-integration-tests/scripts/test-all.sh
+
+.PHONY: injector-architecture-smoke-test
+injector-architecture-smoke-test:
+	ARCH=$(ARCH) bash injector-integration-tests/scripts/smoke-test-architecture.sh
 
 .PHONY: lint
 lint: zig-fmt-check zig-validate-test-imports zig-version-check shellcheck-lint
